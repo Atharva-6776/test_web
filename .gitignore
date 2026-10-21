@@ -1,0 +1,29 @@
+# Python / Virtualenv
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.db
+*.sqlite3
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary / Scratch
+*.zip
+gen_backend.py
+gen_frontend.py
