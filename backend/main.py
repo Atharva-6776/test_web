@@ -1,6 +1,6 @@
+import os
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -11,15 +11,28 @@ from database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="SecureShop Test API")
+app = FastAPI(title="SecureShop Test API", version="1.0.0")
+
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+if allowed_origins_env:
+    for o in allowed_origins_env.split(","):
+        o_clean = o.strip()
+        if o_clean and o_clean not in origins:
+            origins.append(o_clean)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-    ],
+    allow_origins=origins,
     allow_origin_regex=r"https://.*",
     allow_credentials=True,
     allow_methods=["*"],
@@ -55,6 +68,16 @@ def seed_data():
         ]
         db.add_all(products)
         db.commit()
+
+# --- Health Check ---
+@app.get("/health")
+@app.get("/api/health")
+def health_check():
+    return {
+        "status": "healthy",
+        "service": "secureshop-backend",
+        "version": "1.0.0"
+    }
 
 # --- Auth APIs ---
 class LoginCredentials(schemas.BaseModel):
@@ -141,4 +164,6 @@ def read_admin_dashboard(current_user: models.User = Depends(auth.require_admin)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", "8001"))
+    host = os.getenv("HOST", "0.0.0.0")
+    uvicorn.run("main:app", host=host, port=port, reload=True)
